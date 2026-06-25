@@ -66,7 +66,7 @@
           <button onclick="switchView('records')"   id="nav-records"   class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">行为记录</button>
           <button onclick="switchView('plans')"     id="nav-plans"     class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">计划管理</button>
           <button onclick="switchView('history')"   id="nav-history"   class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">历史复盘</button>
-          <button onclick="switchView('share')"     id="nav-share"     class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">干货分享</button>
+
           <button onclick="switchView('settings')"  id="nav-settings"  class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">个人设置</button>
         </div>
       </div>
@@ -301,13 +301,6 @@
   </div>
 </div>
 
-<!-- ========== 【5】干货分享视图 ========== -->
-<div id="view-share" class="view max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
-  <div class="mb-8"><h1 class="text-2xl font-bold text-slate-800 transition-colors duration-300">干货分享</h1><p class="text-slate-500 mt-1 transition-colors duration-300">记录与分享你的心得与经验。</p></div>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="share-grid">
-    <!-- 文章卡片由JS渲染 -->
-  </div>
-</div>
 
 <!-- ========== 【6】个人设置视图 ========== -->
 <div id="view-settings" class="view max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
@@ -448,7 +441,6 @@ const STORE = {
   records:  'tm_records',
   plans:    'tm_plans',
   settings: 'tm_settings',
-  articles: 'tm_articles',
 };
 
 /* ================================================================
@@ -547,12 +539,6 @@ function seedData() {
       { id:uid(), name:'读完《原则》',     category:'学习', priority:'low',    deadline:f(-5), status:'done' },
     ]);
   }
-  if (!localStorage.getItem(STORE.articles)) {
-    saveData(STORE.articles, [
-      { id:uid(), title:'如何高效管理你的每一天', summary:'时间管理的核心不是把每一分钟都填满，而是让重要的事情有足够的时间深度。本文分享我实践了一年的 time blocking 方法，以及配套的周回顾流程。', date:'2026-06-20', content:'' },
-      { id:uid(), title:'深度工作：在碎片时代保持专注', summary:'手机通知、即时消息、开放式办公室……专注已成稀缺资源。本文记录我如何用物理隔离 + 数字极简主义，把日均深度工作时间从1.5小时提升到4小时。', date:'2026-06-15', content:'' },
-    ]);
-  }
   if (!localStorage.getItem(STORE.settings)) {
     saveSettingsData({ sleepTime:'23:00', wakeTime:'07:00', studyGoal:8, exerciseGoal:30, leisureLimit:120, darkMode:false });
   }
@@ -576,7 +562,6 @@ function switchView(view) {
     if (view === 'records')    renderRecords();
     if (view === 'plans')      renderPlans();
     if (view === 'history')    renderHistory();
-    if (view === 'share')      renderShare();
     if (view === 'settings')   renderSettings();
   }, 50);
 }
@@ -996,45 +981,6 @@ function exportJSON() {
   a.href = url; a.download = `时间管理数据_${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(url);
   showToast('JSON已导出');
-}
-
-/* ================================================================
-   【5】干货分享
-================================================================ */
-function renderShare() {
-  const articles = loadData(STORE.articles);
-  const grid = document.getElementById('share-grid');
-  if (!grid) return;
-  if (articles.length===0) {
-    grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-16">暂无文章，请在代码中添加。</div>';
-    return;
-  }
-  grid.innerHTML = articles.map(a => `
-    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 overflow-hidden hover:shadow-md transition group cursor-pointer" onclick="showArticle('${a.id}')">
-      <div class="h-40 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 flex items-center justify-center">
-        <svg class="w-12 h-12 text-white/70" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-      </div>
-      <div class="p-5">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs text-slate-400">${a.date}</span>
-        </div>
-        <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">${escapeHtml(a.title)}</h3>
-        <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-3">${escapeHtml(a.summary)}</p>
-        <div class="mt-4 flex items-center text-sm text-indigo-600 dark:text-indigo-400 font-medium opacity-0 group-hover:opacity-100 transition">
-          阅读全文 →
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function showArticle(id) {
-  const articles = loadData(STORE.articles);
-  const a = articles.find(x=>x.id===id);
-  if (!a) return;
-  // 用弹窗或新页面展示，这里用 alert 占位，用户可替换为真实文章页
-  showToast('文章详情页：请替换为真实内容，文章ID=' + id);
-  // 用户可在此处跳转至 article.html?id=xxx 或打开弹窗
 }
 
 /* ================================================================
