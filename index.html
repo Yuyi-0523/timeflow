@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人时间管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    [x-cloak] { display: none; }
+    .view { animation: fadeIn .25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .nav-active { color: #4f46e5; border-color: #4f46e5; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    .toast { animation: toastIn .3s ease, toastOut .3s ease 2.2s forwards; }
+    @keyframes toastIn { from { opacity:0; transform: translate(-50%,-12px); } to { opacity:1; transform: translate(-50%,0); } }
+    @keyframes toastOut { to { opacity:0; transform: translate(-50%,-12px); } }
+
+    /* 深色主题 */
+    .dark body { background: #0f172a; color: #e2e8f0; }
+    .dark nav { background: #1e293b; border-color: #334155; }
+    .dark .bg-white { background: #1e293b !important; }
+    .dark .bg-slate-50 { background: #0f172a !important; }
+    .dark .text-slate-800 { color: #e2e8f0 !important; }
+    .dark .text-slate-700 { color: #cbd5e1 !important; }
+    .dark .text-slate-600 { color: #94a3b8 !important; }
+    .dark .text-slate-500 { color: #64748b !important; }
+    .dark .text-slate-400 { color: #475569 !important; }
+    .dark .border-slate-100 { border-color: #334155 !important; }
+    .dark .border-slate-200 { border-color: #334155 !important; }
+    .dark .border-slate-50 { background: #1e293b !important; }
+    .dark .divide-y > * { border-color: #334155; }
+    .dark .hover\:bg-slate-50:hover { background: #1e293b !important; }
+    .dark .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+    .dark input, .dark select, .dark textarea {
+      background: #0f172a; color: #e2e8f0; border-color: #334155;
+    }
+    .dark ::placeholder { color: #475569; }
+    .dark .bg-slate-100 { background: #334155 !important; }
+    .dark .bg-indigo-50 { background: #1e1b4b !important; }
+    .dark .bg-blue-50 { background: #172554 !important; }
+    .dark .bg-green-50 { background: #052e16 !important; }
+    .dark .bg-amber-50 { background: #451a03 !important; }
+    .dark .bg-red-50 { background: #450a0a !important; }
+    .dark .border-dashed { border-color: #334155 !important; }
+    .dark .ring-slate-200 { --tw-ring-color: #334155; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 transition-colors duration-300">
+
+<!-- ========== 顶部导航栏 ========== -->
+<nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-200 transition-colors duration-300">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <div class="flex items-center gap-6 overflow-x-auto">
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="w-9 h-9 rounded-lg bg-indigo-600 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <span class="text-lg font-bold text-slate-800 transition-colors duration-300">时间管理</span>
+        </div>
+        <div class="flex gap-1">
+          <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition nav-active whitespace-nowrap">首页</button>
+          <button onclick="switchView('records')"   id="nav-records"   class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">行为记录</button>
+          <button onclick="switchView('plans')"     id="nav-plans"     class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">计划管理</button>
+          <button onclick="switchView('history')"   id="nav-history"   class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">历史复盘</button>
+          <button onclick="switchView('share')"     id="nav-share"     class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">干货分享</button>
+          <button onclick="switchView('settings')"  id="nav-settings"  class="nav-btn px-3 py-2 text-sm font-medium rounded-lg border-b-2 border-transparent hover:bg-slate-50 transition whitespace-nowrap">个人设置</button>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <span class="text-sm text-slate-400 transition-colors duration-300" id="current-date"></span>
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">我</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ========== 【1】首页视图 ========== -->
+<div id="view-dashboard" class="view max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-8">
+    <h1 class="text-2xl font-bold text-slate-800 transition-colors duration-300" id="dash-greeting">早上好，今天也要加油 💪</h1>
+    <p class="text-slate-500 mt-1 transition-colors duration-300">管理你的时间，就是管理你的人生。</p>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="stat-card bg-white rounded-xl p-5 shadow-sm border border-slate-100 transition-colors duration-300">
+      <div class="flex items-center justify-between">
+        <div><p class="text-sm text-slate-400 transition-colors duration-300">今日待办</p><p class="text-2xl font-bold mt-1" id="stat-todos">0</p></div>
+        <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center transition-colors duration-300">
+          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7l2 2 4-4"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card bg-white rounded-xl p-5 shadow-sm border border-slate-100 transition-colors duration-300">
+      <div class="flex items-center justify-between">
+        <div><p class="text-sm text-slate-400 transition-colors duration-300">已完成</p><p class="text-2xl font-bold mt-1 text-green-600" id="stat-done">0</p></div>
+        <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center transition-colors duration-300">
+          <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card bg-white rounded-xl p-5 shadow-sm border border-slate-100 transition-colors duration-300">
+      <div class="flex items-center justify-between">
+        <div><p class="text-sm text-slate-400 transition-colors duration-300">本周记录</p><p class="text-2xl font-bold mt-1 text-blue-600" id="stat-records">0</p></div>
+        <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center transition-colors duration-300">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="stat-card bg-white rounded-xl p-5 shadow-sm border border-slate-100 transition-colors duration-300">
+      <div class="flex items-center justify-between">
+        <div><p class="text-sm text-slate-400 transition-colors duration-300">进行中计划</p><p class="text-2xl font-bold mt-1 text-amber-600" id="stat-plans">0</p></div>
+        <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center transition-colors duration-300">
+          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 transition-colors duration-300">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 transition-colors duration-300">
+        <h2 class="font-bold text-slate-800 transition-colors duration-300 flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          今日待办
+        </h2>
+        <span class="text-sm text-slate-400 transition-colors duration-300" id="todo-summary"></span>
+      </div>
+      <div class="p-4" id="todo-list"></div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 transition-colors duration-300">
+      <div class="px-6 py-4 border-b border-slate-100 transition-colors duration-300">
+        <h2 class="font-bold text-slate-800 transition-colors duration-300 flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          快捷录入
+        </h2>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="text-sm font-medium text-slate-600 transition-colors duration-300">记录内容</label>
+          <input type="text" id="quick-desc" placeholder="如：阅读30分钟" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm font-medium text-slate-600 transition-colors duration-300">分类</label>
+            <select id="quick-category" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+              <option value="工作">工作</option><option value="学习">学习</option><option value="运动">运动</option><option value="休闲">休闲</option><option value="其他">其他</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600 transition-colors duration-300">时长(分钟)</label>
+            <input type="number" id="quick-duration" placeholder="30" min="1" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+          </div>
+        </div>
+        <button onclick="quickAddRecord()" class="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>添加记录
+        </button>
+        <div class="pt-3 border-t border-slate-100 transition-colors duration-300">
+          <label class="text-sm font-medium text-slate-600 transition-colors duration-300">新增待办</label>
+          <div class="mt-1 flex gap-2">
+            <input type="text" id="quick-todo" placeholder="输入待办事项后回车" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300" onkeydown="if(event.key==='Enter')quickAddTodo()">
+            <button onclick="quickAddTodo()" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm border border-slate-100 transition-colors duration-300">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 transition-colors duration-300">
+      <h2 class="font-bold text-slate-800 transition-colors duration-300 flex items-center gap-2">
+        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+        本周时间分配
+      </h2>
+      <span class="text-sm text-slate-400 transition-colors duration-300">按分类统计</span>
+    </div>
+    <div class="p-4"><div id="pie-chart" style="width:100%;height:380px;"></div></div>
+  </div>
+</div>
+
+<!-- ========== 【2】行为记录视图 ========== -->
+<div id="view-records" class="view max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+  <div class="flex items-center justify-between mb-6">
+    <div><h1 class="text-2xl font-bold text-slate-800 transition-colors duration-300">行为记录</h1><p class="text-slate-500 mt-1 transition-colors duration-300">记录每一段时间的去向。</p></div>
+    <button onclick="openRecordModal()" class="px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700 transition flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>添加记录
+    </button>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-6 transition-colors duration-300">
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="flex items-center gap-2"><label class="text-sm text-slate-500 transition-colors duration-300">日期</label><input type="date" id="filter-date" onchange="renderRecords()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+      <div class="flex items-center gap-2"><label class="text-sm text-slate-500 transition-colors duration-300">分类</label>
+        <select id="filter-category" onchange="renderRecords()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+          <option value="">全部</option><option value="工作">工作</option><option value="学习">学习</option><option value="运动">运动</option><option value="休闲">休闲</option><option value="其他">其他</option>
+        </select>
+      </div>
+      <button onclick="clearRecordFilters()" class="px-3 py-1.5 text-sm text-slate-500 hover:text-indigo-600 transition">清除筛选</button>
+      <div class="ml-auto text-sm text-slate-400 transition-colors duration-300" id="record-count"></div>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden transition-colors duration-300">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead><tr class="bg-slate-50 text-slate-500 text-sm transition-colors duration-300"><th class="px-6 py-3 text-left font-medium">日期</th><th class="px-6 py-3 text-left font-medium">分类</th><th class="px-6 py-3 text-left font-medium">时长</th><th class="px-6 py-3 text-left font-medium">内容</th><th class="px-6 py-3 text-right font-medium">操作</th></tr></thead>
+        <tbody id="records-tbody" class="divide-y divide-slate-100 transition-colors duration-300"></tbody>
+      </table>
+    </div>
+    <div id="records-empty" class="hidden py-16 text-center text-slate-400 transition-colors duration-300">
+      <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      <p>暂无记录，点击右上角添加</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 【3】计划管理视图 ========== -->
+<div id="view-plans" class="view max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+  <div class="mb-6"><h1 class="text-2xl font-bold text-slate-800 transition-colors duration-300">计划管理</h1><p class="text-slate-500 mt-1 transition-colors duration-300">规划任务，追踪进度，逐一完成。</p></div>
+  <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-8 transition-colors duration-300">
+    <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2 transition-colors duration-300" id="plan-form-title">
+      <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span>新建计划</span>
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">任务名</label><input type="text" id="plan-name" placeholder="如：完成季度报告" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+      <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">分类</label>
+        <select id="plan-category" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+          <option value="工作">工作</option><option value="学习">学习</option><option value="生活">生活</option><option value="其他">其他</option>
+        </select>
+      </div>
+      <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">优先级</label>
+        <select id="plan-priority" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+          <option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option>
+        </select>
+      </div>
+      <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">截止日期</label><input type="date" id="plan-deadline" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+      <div class="flex items-end gap-2">
+        <button onclick="savePlan()" id="plan-save-btn" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700 transition">添加</button>
+        <button onclick="cancelEditPlan()" id="plan-cancel-btn" class="hidden px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-medium text-sm hover:bg-slate-200 transition">取消</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div>
+      <div class="flex items-center gap-2 mb-3"><div class="w-3 h-3 rounded-full bg-slate-400"></div><h3 class="font-bold text-slate-700 transition-colors duration-300">待执行</h3><span class="text-sm text-slate-400 transition-colors duration-300" id="count-pending">0</span></div>
+      <div id="plans-pending" class="space-y-3"></div>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-3"><div class="w-3 h-3 rounded-full bg-blue-500"></div><h3 class="font-bold text-slate-700 transition-colors duration-300">进行中</h3><span class="text-sm text-slate-400 transition-colors duration-300" id="count-progress">0</span></div>
+      <div id="plans-progress" class="space-y-3"></div>
+    </div>
+    <div>
+      <div class="flex items-center gap-2 mb-3"><div class="w-3 h-3 rounded-full bg-green-500"></div><h3 class="font-bold text-slate-700 transition-colors duration-300">已完成</h3><span class="text-sm text-slate-400 transition-colors duration-300" id="count-done">0</span></div>
+      <div id="plans-done" class="space-y-3"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 【4】历史复盘视图 ========== -->
+<div id="view-history" class="view max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+  <div class="mb-6"><h1 class="text-2xl font-bold text-slate-800 transition-colors duration-300">历史复盘</h1><p class="text-slate-500 mt-1 transition-colors duration-300">回顾时间去向，发现改进空间。</p></div>
+
+  <!-- 时间粒度切换 -->
+  <div class="flex items-center gap-2 mb-6">
+    <button onclick="setHistoryRange('day')" id="hist-day" class="hist-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-transparent transition">按日</button>
+    <button onclick="setHistoryRange('week')" id="hist-week" class="hist-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-transparent transition">按周</button>
+    <button onclick="setHistoryRange('month')" id="hist-month" class="hist-btn px-4 py-2 rounded-lg text-sm font-medium border-2 border-transparent transition">按月</button>
+    <div class="ml-auto flex items-center gap-2">
+      <button onclick="exportJSON()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>导出JSON
+      </button>
+    </div>
+  </div>
+
+  <!-- 时长趋势折线图 -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-8 transition-colors duration-300">
+    <h2 class="font-bold text-slate-800 mb-4 transition-colors duration-300">时长趋势</h2>
+    <div id="history-line-chart" style="width:100%;height:360px;"></div>
+  </div>
+
+  <!-- 分类堆叠面积图 -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 mb-8 transition-colors duration-300">
+    <h2 class="font-bold text-slate-800 mb-4 transition-colors duration-300">分类分布趋势</h2>
+    <div id="history-stack-chart" style="width:100%;height:360px;"></div>
+  </div>
+
+  <!-- 详细记录表格 -->
+  <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden transition-colors duration-300">
+    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between transition-colors duration-300">
+      <h2 class="font-bold text-slate-800 transition-colors duration-300" id="history-table-title">逐日记录</h2>
+      <span class="text-sm text-slate-400 transition-colors duration-300" id="history-count"></span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead><tr class="bg-slate-50 text-slate-500 text-sm transition-colors duration-300"><th class="px-6 py-3 text-left font-medium">日期</th><th class="px-6 py-3 text-left font-medium">分类</th><th class="px-6 py-3 text-left font-medium">时长</th><th class="px-6 py-3 text-left font-medium">内容</th><th class="px-6 py-3 text-right font-medium">操作</th></tr></thead>
+        <tbody id="history-tbody" class="divide-y divide-slate-100 transition-colors duration-300"></tbody>
+      </table>
+    </div>
+    <div id="history-empty" class="hidden py-16 text-center text-slate-400 transition-colors duration-300">
+      <p>暂无记录</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 【5】干货分享视图 ========== -->
+<div id="view-share" class="view max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+  <div class="mb-8"><h1 class="text-2xl font-bold text-slate-800 transition-colors duration-300">干货分享</h1><p class="text-slate-500 mt-1 transition-colors duration-300">记录与分享你的心得与经验。</p></div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="share-grid">
+    <!-- 文章卡片由JS渲染 -->
+  </div>
+</div>
+
+<!-- ========== 【6】个人设置视图 ========== -->
+<div id="view-settings" class="view max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden">
+  <div class="mb-8"><h1 class="text-2xl font-bold text-slate-800 transition-colors duration-300">个人设置</h1><p class="text-slate-500 mt-1 transition-colors duration-300">个性化你的时间管理体验。</p></div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- 作息目标 -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 transition-colors duration-300">
+      <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2 transition-colors duration-300">
+        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        作息标准
+      </h2>
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-slate-600 transition-colors duration-300">入睡时间</label>
+            <input type="time" id="setting-sleep" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-600 transition-colors duration-300">起床时间</label>
+            <input type="time" id="setting-wake" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-600 transition-colors duration-300">每日学习目标（小时）</label>
+          <input type="number" id="setting-study-goal" min="0" max="24" step="0.5" placeholder="8" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-600 transition-colors duration-300">每日运动目标（分钟）</label>
+          <input type="number" id="setting-exercise-goal" min="0" placeholder="30" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-600 transition-colors duration-300">娱乐时间阈值（分钟/天）</label>
+          <input type="number" id="setting-leisure-limit" min="0" placeholder="120" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+          <p class="text-xs text-slate-400 mt-1 transition-colors duration-300">超过此阈值时将在首页提示</p>
+        </div>
+        <button onclick="saveSettings()" class="w-full py-2.5 bg-indigo-600 text-white rounded-lg font-medium text-sm hover:bg-indigo-700 transition">保存设置</button>
+      </div>
+    </div>
+
+    <!-- 外观与数据 -->
+    <div class="space-y-6">
+      <!-- 主题切换 -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 transition-colors duration-300">
+        <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2 transition-colors duration-300">
+          <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+          外观设置
+        </h2>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="font-medium text-slate-700 transition-colors duration-300">深色模式</p>
+            <p class="text-sm text-slate-400 transition-colors duration-300">切换亮色/暗色主题</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="setting-dark-mode" onchange="toggleTheme()" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-400 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 transition-colors duration-300 relative"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 数据管理 -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 transition-colors duration-300">
+        <h2 class="font-bold text-slate-800 mb-4 flex items-center gap-2 transition-colors duration-300">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-3a1 1 0 00-1 1v3M4 7h16"/></svg>
+          数据管理
+        </h2>
+        <p class="text-sm text-slate-500 mb-4 transition-colors duration-300">清空后数据将无法恢复，请谨慎操作。</p>
+        <div class="space-y-3">
+          <button onclick="clearData('records')" class="w-full py-2.5 border border-red-200 text-red-600 rounded-lg font-medium text-sm hover:bg-red-50 transition">清空行为记录</button>
+          <button onclick="clearData('todos')" class="w-full py-2.5 border border-red-200 text-red-600 rounded-lg font-medium text-sm hover:bg-red-50 transition">清空待办事项</button>
+          <button onclick="clearData('plans')" class="w-full py-2.5 border border-red-200 text-red-600 rounded-lg font-medium text-sm hover:bg-red-50 transition">清空计划数据</button>
+          <button onclick="clearData('all')" class="w-full py-2.5 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition">清空全部数据</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 弹窗：添加/编辑记录 ========== -->
+<div id="record-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black/30" onclick="closeRecordModal()"></div>
+  <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 transition-colors duration-300">
+    <h3 class="font-bold text-slate-800 mb-4 transition-colors duration-300" id="record-modal-title">添加行为记录</h3>
+    <div class="space-y-4">
+      <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">日期</label><input type="date" id="modal-date" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium text-slate-600 transition-colors duration-300">分类</label>
+          <select id="modal-category" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+            <option value="工作">工作</option><option value="学习">学习</option><option value="运动">运动</option><option value="休闲">休闲</option><option value="其他">其他</option>
+          </select>
+        </div>
+        <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">时长(分钟)</label><input type="number" id="modal-duration" placeholder="30" min="1" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+      </div>
+      <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">内容描述</label><input type="text" id="modal-desc" placeholder="如：完成项目周报" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+    </div>
+    <div class="flex justify-end gap-3 mt-6">
+      <button onclick="closeRecordModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition">取消</button>
+      <button onclick="submitRecord()" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 弹窗：编辑历史记录 ========== -->
+<div id="history-edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black/30" onclick="closeHistoryEditModal()"></div>
+  <div class="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6 transition-colors duration-300">
+    <h3 class="font-bold text-slate-800 mb-4 transition-colors duration-300">编辑记录</h3>
+    <div class="space-y-4">
+      <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">日期</label><input type="date" id="edit-date" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium text-slate-600 transition-colors duration-300">分类</label>
+          <select id="edit-category" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300">
+            <option value="工作">工作</option><option value="学习">学习</option><option value="运动">运动</option><option value="休闲">休闲</option><option value="其他">其他</option>
+          </select>
+        </div>
+        <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">时长(分钟)</label><input type="number" id="edit-duration" min="1" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+      </div>
+      <div><label class="text-sm font-medium text-slate-600 transition-colors duration-300">内容描述</label><input type="text" id="edit-desc" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white transition-colors duration-300"></div>
+    </div>
+    <div class="flex justify-end gap-3 mt-6">
+      <button onclick="closeHistoryEditModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition">取消</button>
+      <button onclick="submitHistoryEdit()" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Toast ========== -->
+<div id="toast" class="hidden fixed top-20 left-1/2 -translate-x-1/2 z-[60] px-5 py-2.5 bg-slate-800 text-white text-sm rounded-lg shadow-lg toast"></div>
+
+<script>
+/* ================================================================
+   STORE 键
+================================================================ */
+const STORE = {
+  todos:    'tm_todos',
+  records:  'tm_records',
+  plans:    'tm_plans',
+  settings: 'tm_settings',
+  articles: 'tm_articles',
+};
+
+/* ================================================================
+   工具
+================================================================ */
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function loadData(key) { try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; } }
+function saveData(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(STORE.settings)) || {}; }
+  catch { return {}; }
+}
+function saveSettingsData(obj) { localStorage.setItem(STORE.settings, JSON.stringify(obj)); }
+
+function escapeHtml(s) {
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+function formatDuration(min) {
+  if (min < 60) return `${min} 分钟`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return m ? `${h}小时${m}分` : `${h}小时`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.remove('hidden');
+  t.style.animation = 'none'; t.offsetHeight; t.style.animation = '';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.add('hidden'), 2600);
+}
+
+function updateDate() {
+  const now = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  const h = now.getHours();
+  let g = '早上好';
+  if (h >= 12 && h < 14) g = '中午好';
+  else if (h >= 14 && h < 18) g = '下午好';
+  else if (h >= 18) g = '晚上好';
+  const el = document.getElementById('dash-greeting');
+  if (el) el.textContent = `${g}，今天也要加油 💪`;
+  const dEl = document.getElementById('current-date');
+  if (dEl) dEl.textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 星期${days[now.getDay()]}`;
+}
+
+/* ================================================================
+   示例数据
+================================================================ */
+function seedData() {
+  if (!localStorage.getItem(STORE.todos)) {
+    saveData(STORE.todos, [
+      { id:uid(), text:'完成项目周报', done:false },
+      { id:uid(), text:'回复客户邮件', done:false },
+      { id:uid(), text:'健身30分钟', done:true },
+      { id:uid(), text:'阅读《深度工作》第3章', done:false },
+      { id:uid(), text:'准备明日会议材料', done:false },
+    ]);
+  }
+  if (!localStorage.getItem(STORE.records)) {
+    const today = new Date();
+    const d = off => { const t=new Date(today); t.setDate(t.getDate()+off); return t.toISOString().slice(0,10); };
+    saveData(STORE.records, [
+      { id:uid(), date:d(0),  category:'工作', duration:120, desc:'完成项目周报' },
+      { id:uid(), date:d(0),  category:'运动', duration:30,  desc:'晨跑5公里' },
+      { id:uid(), date:d(-1), category:'工作', duration:90,  desc:'团队站会与需求评审' },
+      { id:uid(), date:d(-1), category:'学习', duration:60,  desc:'TypeScript进阶课程' },
+      { id:uid(), date:d(-2), category:'休闲', duration:120, desc:'看电影《奥本海默》' },
+      { id:uid(), date:d(-2), category:'工作', duration:180, desc:'核心功能开发' },
+      { id:uid(), date:d(-3), category:'学习', duration:90,  desc:'阅读技术文档' },
+      { id:uid(), date:d(-3), category:'运动', duration:45,  desc:'力量训练' },
+      { id:uid(), date:d(-4), category:'工作', duration:240, desc:'Bug修复与测试' },
+      { id:uid(), date:d(-5), category:'休闲', duration:60,  desc:'弹吉他' },
+      { id:uid(), date:d(-5), category:'其他', duration:30,  desc:'整理桌面文件' },
+      { id:uid(), date:d(-6), category:'学习', duration:120, desc:'算法刷题' },
+      { id:uid(), date:d(-7), category:'工作', duration:150, desc:'周会 + OKR评审' },
+      { id:uid(), date:d(-8), category:'学习', duration:90,  desc:'系统设计学习' },
+      { id:uid(), date:d(-9), category:'运动', duration:60,  desc:'游泳1小时' },
+      { id:uid(), date:d(-10),category:'工作', duration:200, desc:'版本发布准备' },
+      { id:uid(), date:d(-14),category:'学习', duration:120, desc:'深度学习入门' },
+      { id:uid(), date:d(-20),category:'工作', duration:300, desc:'季度项目冲刺' },
+      { id:uid(), date:d(-30),category:'休闲', duration:180, desc:'短途旅行' },
+    ]);
+  }
+  if (!localStorage.getItem(STORE.plans)) {
+    const today = new Date();
+    const f = off => { const t=new Date(today); t.setDate(t.getDate()+off); return t.toISOString().slice(0,10); };
+    saveData(STORE.plans, [
+      { id:uid(), name:'完成季度OKR总结', category:'工作', priority:'high',   deadline:f(7),  status:'pending' },
+      { id:uid(), name:'学习React Hooks',  category:'学习', priority:'medium', deadline:f(14), status:'pending' },
+      { id:uid(), name:'预约年度体检',     category:'生活', priority:'low',    deadline:f(30), status:'pending' },
+      { id:uid(), name:'重构用户中心模块', category:'工作', priority:'high',   deadline:f(5),  status:'progress' },
+      { id:uid(), name:'准备技术分享PPT',  category:'工作', priority:'medium', deadline:f(3),  status:'progress' },
+      { id:uid(), name:'完成数据库迁移',   category:'工作', priority:'high',   deadline:f(-2), status:'done' },
+      { id:uid(), name:'读完《原则》',     category:'学习', priority:'low',    deadline:f(-5), status:'done' },
+    ]);
+  }
+  if (!localStorage.getItem(STORE.articles)) {
+    saveData(STORE.articles, [
+      { id:uid(), title:'如何高效管理你的每一天', summary:'时间管理的核心不是把每一分钟都填满，而是让重要的事情有足够的时间深度。本文分享我实践了一年的 time blocking 方法，以及配套的周回顾流程。', date:'2026-06-20', content:'' },
+      { id:uid(), title:'深度工作：在碎片时代保持专注', summary:'手机通知、即时消息、开放式办公室……专注已成稀缺资源。本文记录我如何用物理隔离 + 数字极简主义，把日均深度工作时间从1.5小时提升到4小时。', date:'2026-06-15', content:'' },
+    ]);
+  }
+  if (!localStorage.getItem(STORE.settings)) {
+    saveSettingsData({ sleepTime:'23:00', wakeTime:'07:00', studyGoal:8, exerciseGoal:30, leisureLimit:120, darkMode:false });
+  }
+}
+
+/* ================================================================
+   视图切换
+================================================================ */
+let pieChart = null, lineChart = null, stackChart = null;
+let currentView = 'dashboard', historyRange = 'day', editingRecordId = null;
+
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+  document.getElementById('view-' + view).classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('nav-active'));
+  const navEl = document.getElementById('nav-' + view);
+  if (navEl) navEl.classList.add('nav-active');
+  setTimeout(() => {
+    if (view === 'dashboard')  renderDashboard();
+    if (view === 'records')    renderRecords();
+    if (view === 'plans')      renderPlans();
+    if (view === 'history')    renderHistory();
+    if (view === 'share')      renderShare();
+    if (view === 'settings')   renderSettings();
+  }, 50);
+}
+
+/* ================================================================
+   【1】首页
+================================================================ */
+function renderDashboard() {
+  renderTodos(); renderStats(); renderPieChart();
+}
+
+function renderTodos() {
+  const todos = loadData(STORE.todos);
+  const list = document.getElementById('todo-list');
+  if (!list) return;
+  if (todos.length === 0) { list.innerHTML = '<p class="text-center text-slate-400 py-8">暂无待办事项</p>'; document.getElementById('todo-summary').textContent=''; return; }
+  const done = todos.filter(t=>t.done).length;
+  document.getElementById('todo-summary').textContent = `${done}/${todos.length} 已完成`;
+  list.innerHTML = todos.map(t => `
+    <div class="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 transition group dark:hover:bg-slate-700">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')" class="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-400 cursor-pointer shrink-0">
+      <span class="flex-1 text-sm ${t.done?'line-through text-slate-400':'text-slate-700 dark:text-slate-200'}">${escapeHtml(t.text)}</span>
+      <button onclick="deleteTodo('${t.id}')" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V3a1 1 0 011-1h4a1 1 0 011 1v4"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function toggleTodo(id) {
+  const todos = loadData(STORE.todos), t = todos.find(x=>x.id===id);
+  if (t) { t.done=!t.done; saveData(STORE.todos,todos); }
+  renderTodos(); renderStats();
+}
+function deleteTodo(id) {
+  saveData(STORE.todos, loadData(STORE.todos).filter(x=>x.id!==id));
+  renderTodos(); renderStats(); showToast('待办已删除');
+}
+function quickAddTodo() {
+  const input = document.getElementById('quick-todo'), text = input.value.trim();
+  if (!text) return;
+  const todos = loadData(STORE.todos);
+  todos.push({id:uid(), text, done:false}); saveData(STORE.todos, todos);
+  input.value=''; renderTodos(); renderStats(); showToast('待办已添加');
+}
+
+function quickAddRecord() {
+  const desc = document.getElementById('quick-desc').value.trim();
+  const cat  = document.getElementById('quick-category').value;
+  const dur  = parseInt(document.getElementById('quick-duration').value);
+  if (!desc)    { showToast('请输入记录内容'); return; }
+  if (!dur||dur<1) { showToast('请输入有效时长'); return; }
+  const records = loadData(STORE.records);
+  records.push({id:uid(), date:new Date().toISOString().slice(0,10), category:cat, duration:dur, desc});
+  saveData(STORE.records, records);
+  document.getElementById('quick-desc').value=''; document.getElementById('quick-duration').value='';
+  renderStats(); renderPieChart(); showToast('记录已添加');
+}
+
+function renderStats() {
+  const todos = loadData(STORE.todos), records = loadData(STORE.records), plans = loadData(STORE.plans);
+  const now=new Date(), wa=new Date(now); wa.setDate(wa.getDate()-7);
+  const el = id => document.getElementById(id);
+  if (el('stat-todos'))  el('stat-todos').textContent = todos.length;
+  if (el('stat-done'))   el('stat-done').textContent  = todos.filter(t=>t.done).length;
+  if (el('stat-records'))el('stat-records').textContent = records.filter(r=>new Date(r.date)>=wa).length;
+  if (el('stat-plans'))  el('stat-plans').textContent  = plans.filter(p=>p.status==='progress').length;
+}
+
+function renderPieChart() {
+  const records = loadData(STORE.records);
+  const now=new Date(), wa=new Date(now); wa.setDate(wa.getDate()-7);
+  const weekRecords = records.filter(r=>new Date(r.date)>=wa);
+  const catMap={}; weekRecords.forEach(r=>{ catMap[r.category]=(catMap[r.category]||0)+r.duration; });
+  const data=Object.entries(catMap).map(([name,value])=>({name,value}));
+  const palette={'工作':'#6366f1','学习':'#3b82f6','运动':'#10b981','休闲':'#f59e0b','其他':'#94a3b8'};
+  if (!pieChart) pieChart = echarts.init(document.getElementById('pie-chart'));
+  const isDark = document.documentElement.classList.contains('dark');
+  const textColor = isDark ? '#e2e8f0' : '#475569';
+  const legendColor = isDark ? '#94a3b8' : '#64748b';
+  pieChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip:{trigger:'item', formatter:'{b}: {c}分钟 ({d}%)'},
+    legend:{bottom:10, left:'center', textStyle:{color:legendColor}},
+    color: data.map(d=>palette[d.name]||'#94a3b8'),
+    series:[{type:'pie',radius:['45%','70%'],center:['50%','42%'],avoidLabelOverlap:true,
+      itemStyle:{borderRadius:8,borderColor:isDark?'#1e293b':'#fff',borderWidth:2},
+      label:{show:true,formatter:'{b}\n{d}%',color:textColor,fontSize:12},
+      emphasis:{label:{show:true,fontSize:14,fontWeight:'bold'}},
+      data: data.length?data:[{name:'暂无数据',value:1,itemStyle:{color:'#e2e8f0'}}],
+    }],
+  });
+}
+
+/* ================================================================
+   【2】行为记录
+================================================================ */
+function renderRecords() {
+  const records = loadData(STORE.records);
+  const fd = document.getElementById('filter-date').value;
+  const fc = document.getElementById('filter-category').value;
+  let filtered = records.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if (fd) filtered = filtered.filter(r=>r.date===fd);
+  if (fc) filtered = filtered.filter(r=>r.category===fc);
+  const tbody = document.getElementById('records-tbody');
+  const empty = document.getElementById('records-empty');
+  const count = document.getElementById('record-count');
+  if (count) count.textContent = `共 ${filtered.length} 条`;
+  if (filtered.length===0) { if(tbody)tbody.innerHTML=''; if(empty)empty.classList.remove('hidden'); return; }
+  if (empty) empty.classList.add('hidden');
+  const catColors={'工作':'bg-indigo-50 text-indigo-600','学习':'bg-blue-50 text-blue-600','运动':'bg-green-50 text-green-600','休闲':'bg-amber-50 text-amber-600','其他':'bg-slate-100 text-slate-500'};
+  if (tbody) tbody.innerHTML = filtered.map(r=>`
+    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+      <td class="px-6 py-3 text-sm text-slate-600 dark:text-slate-300">${r.date}</td>
+      <td class="px-6 py-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${catColors[r.category]||'bg-slate-100 text-slate-500'}">${r.category}</span></td>
+      <td class="px-6 py-3 text-sm text-slate-600 dark:text-slate-300">${formatDuration(r.duration)}</td>
+      <td class="px-6 py-3 text-sm text-slate-700 dark:text-slate-200">${escapeHtml(r.desc)}</td>
+      <td class="px-6 py-3 text-right">
+        <button onclick="deleteRecord('${r.id}')" class="text-slate-400 hover:text-red-500 transition" title="删除">
+          <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V3a1 1 0 011-1h4a1 1 0 011 1v4"/></svg>
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+function clearRecordFilters() {
+  document.getElementById('filter-date').value='';
+  document.getElementById('filter-category').value='';
+  renderRecords();
+}
+
+function openRecordModal() {
+  editingRecordId = null;
+  document.getElementById('record-modal-title').textContent = '添加行为记录';
+  document.getElementById('modal-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('modal-category').value='工作';
+  document.getElementById('modal-duration').value='';
+  document.getElementById('modal-desc').value='';
+  document.getElementById('record-modal').classList.remove('hidden');
+}
+function closeRecordModal() { document.getElementById('record-modal').classList.add('hidden'); }
+
+function submitRecord() {
+  const date=document.getElementById('modal-date').value;
+  const category=document.getElementById('modal-category').value;
+  const duration=parseInt(document.getElementById('modal-duration').value);
+  const desc=document.getElementById('modal-desc').value.trim();
+  if(!date){showToast('请选择日期');return;}
+  if(!duration||duration<1){showToast('请输入有效时长');return;}
+  if(!desc){showToast('请输入内容描述');return;}
+  const records=loadData(STORE.records);
+  if (editingRecordId) {
+    const r=records.find(x=>x.id===editingRecordId);
+    if(r){r.date=date;r.category=category;r.duration=duration;r.desc=desc;}
+    showToast('记录已更新');
+  } else {
+    records.push({id:uid(),date,category,duration,desc});
+    showToast('记录已添加');
+  }
+  saveData(STORE.records,records);
+  closeRecordModal(); renderRecords();
+}
+
+function deleteRecord(id) {
+  saveData(STORE.records, loadData(STORE.records).filter(x=>x.id!==id));
+  renderRecords(); showToast('记录已删除');
+}
+
+/* ================================================================
+   【3】计划管理
+================================================================ */
+let editingPlanId = null;
+
+function renderPlans() {
+  const plans=loadData(STORE.plans);
+  const groups={pending:[],progress:[],done:[]};
+  plans.forEach(p=>{if(groups[p.status])groups[p.status].push(p);});
+  const el=id=>document.getElementById(id);
+  if(el('count-pending'))  el('count-pending').textContent  = `(${groups.pending.length})`;
+  if(el('count-progress')) el('count-progress').textContent = `(${groups.progress.length})`;
+  if(el('count-done'))     el('count-done').textContent     = `(${groups.done.length})`;
+  const emptyCol = text => `<div class="border-2 border-dashed border-slate-200 dark:border-slate-600 rounded-xl py-10 text-center text-sm text-slate-400 transition-colors duration-300">${text}</div>`;
+  if(el('plans-pending'))  el('plans-pending').innerHTML  = groups.pending.map(p=>planCard(p)).join('') || emptyCol('暂无待执行计划');
+  if(el('plans-progress')) el('plans-progress').innerHTML = groups.progress.map(p=>planCard(p)).join('') || emptyCol('暂无进行中计划');
+  if(el('plans-done'))     el('plans-done').innerHTML     = groups.done.map(p=>planCard(p)).join('') || emptyCol('暂无已完成计划');
+}
+
+function planCard(p) {
+  const pri = {'high':{label:'高',cls:'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400'},'medium':{label:'中',cls:'bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'},'low':{label:'低',cls:'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400'}}[p.priority]||{label:'中',cls:'bg-amber-50 text-amber-600'};
+  const catColors={'工作':'bg-indigo-50 text-indigo-600','学习':'bg-blue-50 text-blue-600','生活':'bg-green-50 text-green-600','其他':'bg-slate-100 text-slate-500'};
+  const overdue = p.status!=='done' && new Date(p.deadline)<new Date(new Date().toDateString());
+  return `<div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 p-4 group hover:shadow-md transition">
+    <div class="flex items-start justify-between gap-2 mb-2">
+      <h4 class="font-medium text-slate-800 dark:text-slate-100 text-sm ${p.status==='done'?'line-through text-slate-400':''}">${escapeHtml(p.name)}</h4>
+      <span class="px-2 py-0.5 rounded text-xs font-medium ${pri.cls} shrink-0">${pri.label}</span>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <span class="px-2 py-0.5 rounded-full text-xs ${catColors[p.category]||'bg-slate-100 text-slate-500'}">${p.category}</span>
+      <span class="text-xs text-slate-400 flex items-center gap-1 ${overdue?'text-red-500 font-medium':''}">
+        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        ${p.deadline}${overdue?' (已逾期)':''}
+      </span>
+    </div>
+    <div class="flex items-center gap-2">
+      ${planStatusBtn(p)}
+      <button onclick="editPlan('${p.id}')" class="px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition">编辑</button>
+      <button onclick="deletePlan('${p.id}')" class="px-2 py-1 text-xs text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition">删除</button>
+    </div>
+  </div>`;
+}
+
+function planStatusBtn(p) {
+  if(p.status==='pending') return `<button onclick="changePlanStatus('${p.id}','progress')" class="px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 rounded transition">开始</button>`;
+  if(p.status==='progress') return `<button onclick="changePlanStatus('${p.id}','done')" class="px-2 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 rounded transition">完成</button>`;
+  return `<button onclick="changePlanStatus('${p.id}','pending')" class="px-2 py-1 text-xs bg-slate-50 text-slate-500 hover:bg-slate-100 dark:bg-slate-700 dark:text-slate-400 rounded transition">重置</button>`;
+}
+
+function changePlanStatus(id,status) {
+  const plans=loadData(STORE.plans), p=plans.find(x=>x.id===id);
+  if(p){p.status=status;saveData(STORE.plans,plans);} renderPlans();
+}
+function savePlan() {
+  const name=document.getElementById('plan-name').value.trim();
+  const category=document.getElementById('plan-category').value;
+  const priority=document.getElementById('plan-priority').value;
+  const deadline=document.getElementById('plan-deadline').value;
+  if(!name){showToast('请输入任务名');return;}
+  if(!deadline){showToast('请选择截止日期');return;}
+  const plans=loadData(STORE.plans);
+  if(editingPlanId){
+    const p=plans.find(x=>x.id===editingPlanId);
+    if(p){p.name=name;p.category=category;p.priority=priority;p.deadline=deadline;}
+    showToast('计划已更新');
+  }else{
+    plans.push({id:uid(),name,category,priority,deadline,status:'pending'});
+    showToast('计划已添加');
+  }
+  saveData(STORE.plans,plans); resetPlanForm(); renderPlans();
+}
+function editPlan(id) {
+  const p=loadData(STORE.plans).find(x=>x.id===id);
+  if(!p)return; editingPlanId=id;
+  document.getElementById('plan-name').value=p.name;
+  document.getElementById('plan-category').value=p.category;
+  document.getElementById('plan-priority').value=p.priority;
+  document.getElementById('plan-deadline').value=p.deadline;
+  document.getElementById('plan-form-title').querySelector('span').textContent='编辑计划';
+  document.getElementById('plan-save-btn').textContent='保存';
+  document.getElementById('plan-cancel-btn').classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function cancelEditPlan(){resetPlanForm();}
+function resetPlanForm(){
+  editingPlanId=null;
+  document.getElementById('plan-name').value='';
+  document.getElementById('plan-category').value='工作';
+  document.getElementById('plan-priority').value='medium';
+  document.getElementById('plan-deadline').value='';
+  document.getElementById('plan-form-title').querySelector('span').textContent='新建计划';
+  document.getElementById('plan-save-btn').textContent='添加';
+  document.getElementById('plan-cancel-btn').classList.add('hidden');
+}
+function deletePlan(id){
+  saveData(STORE.plans,loadData(STORE.plans).filter(x=>x.id!==id));
+  if(editingPlanId===id)resetPlanForm();
+  renderPlans(); showToast('计划已删除');
+}
+
+/* ================================================================
+   【4】历史复盘
+================================================================ */
+function setHistoryRange(range) {
+  historyRange = range;
+  ['day','week','month'].forEach(r=>{
+    const b=document.getElementById('hist-'+r);
+    if(b)b.classList.remove('nav-active','bg-indigo-600','text-white');
+  });
+  const active=document.getElementById('hist-'+range);
+  if(active){active.classList.add('nav-active','bg-indigo-600','text-white');}
+  renderHistory();
+}
+
+function renderHistory() {
+  renderHistoryCharts();
+  renderHistoryTable();
+}
+
+function getHistoryGroups() {
+  const records = loadData(STORE.records).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const groups = {};
+  records.forEach(r => {
+    let key;
+    const d = new Date(r.date);
+    if (historyRange==='day') {
+      key = r.date;
+    } else if (historyRange==='week') {
+      const dt = new Date(d); dt.setDate(dt.getDate()-dt.getDay());
+      key = dt.toISOString().slice(0,10)+' 周';
+    } else {
+      key = r.date.slice(0,7);
+    }
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(r);
+  });
+  return { records, groups: Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0])) };
+}
+
+function renderHistoryCharts() {
+  const { groups } = getHistoryGroups();
+  const labels = groups.map(g=>g[0]);
+  const allCats = [...new Set(loadData(STORE.records).map(r=>r.category))];
+  const palette = {'工作':'#6366f1','学习':'#3b82f6','运动':'#10b981','休闲':'#f59e0b','其他':'#94a3b8'};
+
+  // 总时长折线
+  const totalData = labels.map(k=>{
+    const recs = groups.find(g=>g[0]===k)[1];
+    return recs.reduce((s,r)=>s+r.duration,0);
+  });
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const textColor = isDark?'#e2e8f0':'#475569';
+  const gridColor = isDark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)';
+  const bgColor = 'transparent';
+
+  if (!lineChart) lineChart = echarts.init(document.getElementById('history-line-chart'));
+  lineChart.setOption({
+    backgroundColor: bgColor,
+    tooltip:{trigger:'axis'},
+    grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
+    xAxis:{type:'category',data:labels,axisLabel:{color:textColor,rotate:labels.length>10?45:0},axisLine:{lineStyle:{color:gridColor}}},
+    yAxis:{type:'value',axisLabel:{color:textColor},splitLine:{lineStyle:{color:gridColor}}},
+    series:[{data:totalData,type:'line',smooth:true,areaStyle:{opacity:0.15},lineStyle:{width:3},itemStyle:{color:'#6366f1'},name:'总时长(分钟)'}],
+  });
+
+  // 分类堆叠
+  const stackSeries = allCats.map(cat=> ({
+    name: cat,
+    type: 'bar',
+    stack: 'total',
+    data: labels.map(k=>{
+      const recs=groups.find(g=>g[0]===k)[1];
+      return recs.filter(r=>r.category===cat).reduce((s,r)=>s+r.duration,0);
+    }),
+    itemStyle:{color:palette[cat]||'#94a3b8'},
+  }));
+
+  if (!stackChart) stackChart = echarts.init(document.getElementById('history-stack-chart'));
+  stackChart.setOption({
+    backgroundColor: bgColor,
+    tooltip:{trigger:'axis'},
+    legend:{bottom:0,textStyle:{color:textColor}},
+    grid:{left:'3%',right:'4%',bottom:'12%',containLabel:true},
+    xAxis:{type:'category',data:labels,axisLabel:{color:textColor,rotate:labels.length>10?45:0},axisLine:{lineStyle:{color:gridColor}}},
+    yAxis:{type:'value',axisLabel:{color:textColor},splitLine:{lineStyle:{color:gridColor}}},
+    series: stackSeries,
+  });
+}
+
+function renderHistoryTable() {
+  const { groups } = getHistoryGroups();
+  const tbody = document.getElementById('history-tbody');
+  const empty = document.getElementById('history-empty');
+  const count = document.getElementById('history-count');
+  const title = document.getElementById('history-table-title');
+  if (title) title.textContent = {'day':'逐日记录','week':'逐周记录','month':'逐月记录'}[historyRange];
+
+  const allRecords = [];
+  groups.forEach(([k,recs])=> recs.forEach(r=> allRecords.push({...r, _group:k})));
+  if (count) count.textContent = `共 ${allRecords.length} 条`;
+
+  if (allRecords.length===0) { if(tbody)tbody.innerHTML=''; if(empty)empty.classList.remove('hidden'); return; }
+  if (empty) empty.classList.add('hidden');
+
+  const catColors={'工作':'bg-indigo-50 text-indigo-600','学习':'bg-blue-50 text-blue-600','运动':'bg-green-50 text-green-600','休闲':'bg-amber-50 text-amber-600','其他':'bg-slate-100 text-slate-500'};
+  if (tbody) tbody.innerHTML = allRecords.map(r=>`
+    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+      <td class="px-6 py-3 text-sm text-slate-600 dark:text-slate-300">${r.date}</td>
+      <td class="px-6 py-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${catColors[r.category]||'bg-slate-100 text-slate-500'}">${r.category}</span></td>
+      <td class="px-6 py-3 text-sm text-slate-600 dark:text-slate-300">${formatDuration(r.duration)}</td>
+      <td class="px-6 py-3 text-sm text-slate-700 dark:text-slate-200">${escapeHtml(r.desc)}</td>
+      <td class="px-6 py-3 text-right">
+        <button onclick="editHistoryRecord('${r.id}')" class="text-slate-400 hover:text-indigo-500 transition mr-3" title="编辑">
+          <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </button>
+        <button onclick="deleteRecord('${r.id}')" class="text-slate-400 hover:text-red-500 transition" title="删除">
+          <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V3a1 1 0 011-1h4a1 1 0 011 1v4"/></svg>
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+function editHistoryRecord(id) {
+  const records = loadData(STORE.records);
+  const r = records.find(x=>x.id===id);
+  if (!r) return;
+  editingRecordId = null; // use submitRecord for consistency
+  document.getElementById('record-modal-title').textContent = '编辑记录';
+  document.getElementById('modal-date').value = r.date;
+  document.getElementById('modal-category').value = r.category;
+  document.getElementById('modal-duration').value = r.duration;
+  document.getElementById('modal-desc').value = r.desc;
+  // override submit to update
+  editingRecordId = id;
+  document.getElementById('record-modal').classList.remove('hidden');
+}
+
+function exportJSON() {
+  const data = {
+    exportTime: new Date().toISOString(),
+    todos: loadData(STORE.todos),
+    records: loadData(STORE.records),
+    plans: loadData(STORE.plans),
+    settings: loadSettings(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `时间管理数据_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('JSON已导出');
+}
+
+/* ================================================================
+   【5】干货分享
+================================================================ */
+function renderShare() {
+  const articles = loadData(STORE.articles);
+  const grid = document.getElementById('share-grid');
+  if (!grid) return;
+  if (articles.length===0) {
+    grid.innerHTML = '<div class="col-span-full text-center text-slate-400 py-16">暂无文章，请在代码中添加。</div>';
+    return;
+  }
+  grid.innerHTML = articles.map(a => `
+    <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-600 overflow-hidden hover:shadow-md transition group cursor-pointer" onclick="showArticle('${a.id}')">
+      <div class="h-40 bg-gradient-to-br from-indigo-400 via-purple-400 to-pink-400 flex items-center justify-center">
+        <svg class="w-12 h-12 text-white/70" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+      </div>
+      <div class="p-5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs text-slate-400">${a.date}</span>
+        </div>
+        <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">${escapeHtml(a.title)}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-3">${escapeHtml(a.summary)}</p>
+        <div class="mt-4 flex items-center text-sm text-indigo-600 dark:text-indigo-400 font-medium opacity-0 group-hover:opacity-100 transition">
+          阅读全文 →
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showArticle(id) {
+  const articles = loadData(STORE.articles);
+  const a = articles.find(x=>x.id===id);
+  if (!a) return;
+  // 用弹窗或新页面展示，这里用 alert 占位，用户可替换为真实文章页
+  showToast('文章详情页：请替换为真实内容，文章ID=' + id);
+  // 用户可在此处跳转至 article.html?id=xxx 或打开弹窗
+}
+
+/* ================================================================
+   【6】个人设置
+================================================================ */
+function renderSettings() {
+  const s = loadSettings();
+  const el=id=>document.getElementById(id);
+  if(el('setting-sleep'))            el('setting-sleep').value            = s.sleepTime||'23:00';
+  if(el('setting-wake'))             el('setting-wake').value             = s.wakeTime||'07:00';
+  if(el('setting-study-goal'))       el('setting-study-goal').value       = s.studyGoal||8;
+  if(el('setting-exercise-goal'))    el('setting-exercise-goal').value    = s.exerciseGoal||30;
+  if(el('setting-leisure-limit'))    el('setting-leisure-limit').value    = s.leisureLimit||120;
+  if(el('setting-dark-mode'))        el('setting-dark-mode').checked       = s.darkMode||false;
+  applyTheme(s.darkMode);
+}
+
+function saveSettings() {
+  const s = {
+    sleepTime:      document.getElementById('setting-sleep').value,
+    wakeTime:       document.getElementById('setting-wake').value,
+    studyGoal:      parseFloat(document.getElementById('setting-study-goal').value)||0,
+    exerciseGoal:   parseInt(document.getElementById('setting-exercise-goal').value)||0,
+    leisureLimit:   parseInt(document.getElementById('setting-leisure-limit').value)||0,
+    darkMode:       document.getElementById('setting-dark-mode').checked,
+  };
+  saveSettingsData(s);
+  applyTheme(s.darkMode);
+  showToast('设置已保存');
+}
+
+function toggleTheme() {
+  const on = document.getElementById('setting-dark-mode').checked;
+  applyTheme(on);
+  const s = loadSettings(); s.darkMode=on; saveSettingsData(s);
+}
+
+function applyTheme(on) {
+  if (on) document.documentElement.classList.add('dark');
+  else    document.documentElement.classList.remove('dark');
+  // 重绘图表以适配深色
+  setTimeout(()=>{
+    if(pieChart)   { try{pieChart.dispose();pieChart=null;renderPieChart();}catch(e){} }
+    if(lineChart)  { try{lineChart.dispose();lineChart=null;if(currentView==='history')renderHistoryCharts();}catch(e){} }
+    if(stackChart) { try{stackChart.dispose();stackChart=null;if(currentView==='history')renderHistoryCharts();}catch(e){} }
+  },100);
+}
+
+function clearData(type) {
+  const labels = {all:'全部数据',records:'行为记录',todos:'待办事项',plans:'计划数据'};
+  if (!confirm(`确定要清空${labels[type]}吗？此操作不可恢复！`)) return;
+  if (type==='all'||type==='records')  { saveData(STORE.records,[]); }
+  if (type==='all'||type==='todos')    { saveData(STORE.todos,[]); }
+  if (type==='all'||type==='plans')    { saveData(STORE.plans,[]); }
+  if (type==='all')                     { saveSettingsData({}); }
+  renderDashboard(); renderRecords(); renderPlans();
+  showToast(`${labels[type]}已清空`);
+}
+
+/* ================================================================
+   初始化
+================================================================ */
+seedData();
+updateDate();
+
+// 初始化主题
+const initSettings = loadSettings();
+if (initSettings.darkMode) {
+  document.documentElement.classList.add('dark');
+  const cb = document.getElementById('setting-dark-mode');
+  if (cb) cb.checked = true;
+}
+
+renderDashboard();
+// 默认激活"按日"
+setHistoryRange('day');
+
+window.addEventListener('resize', () => {
+  if(pieChart)   pieChart.resize();
+  if(lineChart)   lineChart.resize();
+  if(stackChart)  stackChart.resize();
+});
+</script>
+</body>
+</html>
